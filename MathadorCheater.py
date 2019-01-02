@@ -17,6 +17,7 @@ result=44
 # Score:
 #   18 points : All operations are used
 #   OR
+#.  5 points for result
 #   1 point for x or + operations
 #   2 points for - operation
 #   3 points for / operation
@@ -34,7 +35,7 @@ def get_score(*ops):
     if len(ops) == 4:
         if True not in [a==b for (a,b) in combinations(ops, 2)]:
             return 18
-    return sum([operationsScore[op.__name__] for op in ops])
+    return sum([5]+[operationsScore[op.__name__] for op in ops])
 
 def save_solution(save, description, *ops):
     # Use score as index in save
