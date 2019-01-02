@@ -123,4 +123,4 @@ for (k,v) in solutions.items() :
         print("{}{}".format(4*" ", s))
     print(15*"-=-.")
 print("End of searching")
-#raw_input("Press RETURN key to close window.")
+raw_input("Press RETURN key to close window.")
