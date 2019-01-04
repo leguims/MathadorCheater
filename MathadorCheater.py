@@ -1,5 +1,6 @@
 from itertools import permutations, product, combinations#, combinations_with_replacement
 from operator import add, truediv, sub, mul # truediv = float div
+from copy import deepcopy
 
 #Enonce
 level_unknown=[
@@ -45,7 +46,8 @@ operations=[add, truediv, sub, mul]
 operationsSigns={k.__name__:v for (k,v) in zip(operations, ['+',':','-','x'])}
 operationsScore={k.__name__:v for (k,v) in zip(operations, [ 1 , 3 , 2 , 1 ])}
 loop_numbers=[list(p) for p in permutations(numbers)]
-loop_operations=[list(p) for p in product(operations, repeat=4)]
+# add reduced sets 1, 2 and 3 for loop_operations=[list(p) for r in range (1,5) for p in product(operations, repeat=r)]
+loop_operations=[list(p) for r in range (1,5) for p in product(operations, repeat=r)]
 solutions={}
 
 def get_score(*ops):
@@ -62,96 +64,56 @@ def save_solution(save, description, *ops):
     if description not in save[score]:
         save[score].append(description)
 
-for (n1, n2, n3, n4, n5) in loop_numbers:
-    for (op1, op2, op3, op4) in loop_operations:
-        # Make it easier to print
-        (ops1, ops2, ops3, ops4) = [operationsSigns[op.__name__] for op in (op1, op2, op3, op4)]
+count=0
+for numbers in loop_numbers:
+    for operations in loop_operations:
+        # Construct loop on priorities instead to code formulas with 'if' instructions
+        for priorities in permutations(range(len(operations))): # [0..len()-1]
+            count+=1
+            # Copy numbers and drop unused numbers
+            operations_copy = deepcopy(operations)
+            current_result = deepcopy(numbers[0:len(operations)+1])
 
-        # Mathador or 4 operators !
-        try:
-            if op4( op3( op2( op1(n1, n2), n3), n4), n5) == result:
-                solutionString = "{op1}{op2}{op3}{op4} : [ ( [ ({n1}{op1}{n2}) {op2}{n3} ] {op3}{n4}) {op4}{n5}] = {result}".format(
-                    op1 = ops1, n1 = n1, n2 = n2,
-                    op2 = ops2, n3 = n3,
-                    op3 = ops3, n4 = n4,
-                    op4 = ops4, n5 = n5,
-                    result = result)
-                #print(solutionString)
-                save_solution(solutions, solutionString, op1, op2, op3, op4)
-        except ZeroDivisionError:
-            pass
-        try:
-            if op4( op3(op1(n1, n2), op2(n3,n4)), n5) == result:
-                solutionString = "{op1}{op3}{op2}{op4} : [ ({n1}{op1}{n2}) {op3} ({n3}{op2}{n4}) ] {op4}{n5} = {result}".format(
-                    op1 = ops1, n1 = n1, n2 = n2,
-                    op2 = ops2, n3 = n3, n4 = n4,
-                    op3 = ops3, 
-                    op4 = ops4, n5 = n5,
-                    result = result)
-                #print(solutionString)
-                save_solution(solutions, solutionString, op1, op2, op3, op4)
-        except ZeroDivisionError:
-            pass
-        try:
-            if op4( op2( op1(n1, n2), n3), op3(n4, n5)) == result:
-                solutionString = "{op1}{op2}{op4}{op3} : [ ({n1}{op1}{n2}) {op2}{n3} ] {op4} ({n4}{op3}{n5}) = {result}".format(
-                    op1 = ops1, n1 = n1, n2 = n2,
-                    op2 = ops2, n3 = n3,
-                    op3 = ops3, n4 = n4, n5 = n5,
-                    op4 = ops4,
-                    result = result)
-                #print(solutionString)
-                save_solution(solutions, solutionString, op1, op2, op3, op4)
-        except ZeroDivisionError:
-            pass
+            # Modify priority to be relative values
+            # [3, 2, 1, 0] becomes [3, 2, 1, 0]
+            # [0, 3, 2, 1] becomes [0, 2, 1, 0]
+            # [3, 0, 2, 1] becomes [3, 0, 1, 0]
+            # [0, 1, 2, 3] becomes [0, 0, 0, 0]
+            priorities_writable = list(deepcopy(priorities))
+            for index in range(len(priorities_writable)):
+                priorities_writable = priorities_writable[:index+1] + [p-1 if p>priorities_writable[index] else p for p in priorities_writable[index+1:]]
+            
+            try:
+                solutionString = ""
+                for next_operation in priorities_writable:
+                    n1 = current_result[next_operation]
+                    n2 = current_result[next_operation+1]
+                    op = operationsSigns[operations_copy[next_operation].__name__]
+                    # Pop 'index=next_operation' + 'index=next_operation+1'
+                    r  = operations_copy.pop(next_operation)(current_result.pop(next_operation),current_result.pop(next_operation))
+                    if len(solutionString) > 0:
+                        solutionString += " ; "
+                    solutionString += "{n1}{op}{n2} = {result}".format(
+                        n1 = n1,
+                        op = op,
+                        n2 = n2,
+                        result = r)
+                    current_result.insert(next_operation, r)
+                if current_result[0] == result:
+                    save_solution(solutions, solutionString, *operations)
+            except ZeroDivisionError:
+                 pass
 
-        # Less than 4 operators
-        try:
-            if op3( op2( op1(n1, n2), n3), n4) == result:
-                solutionString = "{op1}{op2}{op3} : [ ({n1}{op1}{n2}) {op2}{n3} ] {op3}{n4} = {result}".format(
-                    op1 = ops1, n1 = n1, n2 = n2,
-                    op2 = ops2, n3 = n3,
-                    op3 = ops3, n4 = n4,
-                    result = result)
-                #print(solutionString)
-                save_solution(solutions, solutionString, op1, op2, op3)
-        except ZeroDivisionError:
-            pass
-        try:
-            if op3( op1(n1, n2), op2(n3, n4) ) == result:
-                solutionString = "{op1}{op3}{op2} : ({n1}{op1}{n2}) {op3} ({n3}{op2}{n4}) = {result}".format(
-                    op1 = ops1, n1 = n1, n2 = n2,
-                    op2 = ops2, n3 = n3,
-                    op3 = ops3, n4 = n4,
-                    result = result)
-                #print(solutionString)
-                save_solution(solutions, solutionString, op1, op2, op3)
-        except ZeroDivisionError:
-            pass
-        try:
-            if op2( op1(n1, n2), n3) == result:
-                solutionString = "{op1}{op2} : ({n1}{op1}{n2}) {op2}{n3} = {result}".format(
-                    op1 = ops1, n1 = n1, n2 = n2,
-                    op2 = ops2, n3 = n3,
-                    result = result)
-                #print(solutionString)
-                save_solution(solutions, solutionString, op1, op2)
-        except ZeroDivisionError:
-            pass
-        try:
-            if op1(n1, n2) == result:
-                solutionString = "{op1} : ({n1}{op1}{n2}) = {result}".format(
-                    op1 = ops1, n1 = n1, n2 = n2,
-                    result = result)
-                #print(solutionString)
-                save_solution(solutions, solutionString, op1)
-        except ZeroDivisionError:
-            pass
-
-print("Find {} with these numbers : {} and operations {}".format(int(result), [int(n) for n in numbers], operationsSigns.values()))
-print("{} possibilies to sort operations and numbers.".format(len(loop_numbers)*len(loop_operations)))
-print("Found {} solutions below.".format( sum([len(i) for i in solutions.values()]) ))
-print(15*4*"=")
+resume = """{tail}
+Find {result} with these numbers : {numbers} and operations {operations}
+{count} possibilies to sort operations and numbers.
+Found {solutions} solutions below.
+{tail}""".format(
+    result = int(result), numbers = [int(n) for n in numbers], operations = operationsSigns.values(),
+    count = count,
+    solutions = sum([len(i) for i in solutions.values()]),
+    tail = 15*4*"=")
+print(resume)
 for (k,v) in solutions.items() :
     print("Found {} solution{} with {} point{}:{}".format(len(v),
                                                  "s" if len(v)>1 else "",
@@ -161,5 +123,6 @@ for (k,v) in solutions.items() :
     for s in v:
         print("{}{}".format(4*" ", s))
     print(15*"-=-.")
+print(resume)
 print("End of searching")
 raw_input("Press RETURN key to close window.")
