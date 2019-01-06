@@ -1,5 +1,5 @@
 from itertools import permutations, product, combinations#, combinations_with_replacement
-from operator import add, truediv, sub, mul # truediv = float div
+from operator import add, sub, mul # truediv = float div, but prints float hard to read
 from copy import deepcopy
 from fractions import Fraction # Use fraction instead of float from truediv
 
@@ -14,7 +14,7 @@ level_unknown=[
 level_1=[
     {'result': 6, 'numbers':(1, 12, 9, 2, 2)},
     {'result': 6, 'numbers':(4, 9, 3, 8, 2)},
-    {'result': 4, 'numbers':(6, 2, 12, 4, 5)},
+    {'result': 4, 'numbers':(6, 2, 13, 4, 5)},
     {'result': 8, 'numbers':(8, 2, 2, 10, 8)},
     {'result': 6, 'numbers':(1, 2, 9, 12, 2)},
     {'result': 3, 'numbers':(1, 9, 2, 2, 12)},
@@ -29,7 +29,7 @@ level_2=[
     {'result': 14, 'numbers':(9, 7, 9, 1, 2)},
     ]
 
-to_solve=level_1[0]
+to_solve=level_1[3]
 
 # Score:
 #   18 points : All operations are used
@@ -43,7 +43,7 @@ to_solve=level_1[0]
 #teatments
 numbers=to_solve['numbers']
 result=to_solve['result']
-operations=[add, truediv, sub, mul]
+operations=[add, Fraction, sub, mul] # truediv replaced bye Fraction for more readable prints.
 operationsSigns={k.__name__:v for (k,v) in zip(operations, ['+',':','-','x'])}
 operationsScore={k.__name__:v for (k,v) in zip(operations, [ 1 , 3 , 2 , 1 ])}
 loop_numbers=[list(p) for p in permutations(numbers)]
@@ -91,8 +91,7 @@ for numbers in loop_numbers:
                     op = operationsSigns[operations_copy[next_operation].__name__]
                     # Pop 'index=next_operation' + 'index=next_operation+1'
                     r  = operations_copy.pop(next_operation)(current_result.pop(next_operation),current_result.pop(next_operation))
-                    if op == operationsSigns['truediv']:
-                        r = Fraction(r)
+
                     if len(solutionString) > 0:
                         solutionString += " ; "
                     solutionString += "{n1}{op}{n2} = {result}".format(
