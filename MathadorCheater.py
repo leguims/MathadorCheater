@@ -1,7 +1,7 @@
 from itertools import permutations, product, combinations#, combinations_with_replacement
 from operator import add, truediv, sub, mul # truediv = float div
 from copy import deepcopy
-from fractions import Fraction
+from fractions import Fraction # Use fraction instead of float from truediv
 
 #Enonce
 level_unknown=[
@@ -34,7 +34,7 @@ to_solve=level_1[0]
 # Score:
 #   18 points : All operations are used
 #   OR
-#.  5 points for result
+#   5 points for result
 #   1 point for x or + operations
 #   2 points for - operation
 #   3 points for / operation
@@ -47,7 +47,6 @@ operations=[add, truediv, sub, mul]
 operationsSigns={k.__name__:v for (k,v) in zip(operations, ['+',':','-','x'])}
 operationsScore={k.__name__:v for (k,v) in zip(operations, [ 1 , 3 , 2 , 1 ])}
 loop_numbers=[list(p) for p in permutations(numbers)]
-# add reduced sets 1, 2 and 3 for loop_operations=[list(p) for r in range (1,5) for p in product(operations, repeat=r)]
 loop_operations=[list(p) for r in range (1,5) for p in product(operations, repeat=r)]
 solutions={}
 
@@ -97,9 +96,9 @@ for numbers in loop_numbers:
                     if len(solutionString) > 0:
                         solutionString += " ; "
                     solutionString += "{n1}{op}{n2} = {result}".format(
-                        n1 = n1,
+                        n1 = n1 if n1 >= 0 else "({})".format(n1),
                         op = op,
-                        n2 = n2,
+                        n2 = n2 if n2 >= 0 else "({})".format(n2),
                         result = r)
                     current_result.insert(next_operation, r)
                 if current_result[0] == result:
@@ -107,16 +106,31 @@ for numbers in loop_numbers:
             except ZeroDivisionError:
                  pass
 
-resume = """{tail}
+line_separator = 15*4*"="
+
+solutions_resume = ""
+for (k,v) in solutions.items() :
+    if len(solutions_resume) > 0:
+        solutions_resume += "\n"
+    solutions_resume += """Found {} solution{} with {} point{}.{}""".format(len(v),
+                                                 "s" if len(v)>1 else "",
+                                                 k,
+                                                 "s" if k>1 else "",
+                                                 " ==> Mathador <==" if k==18 else "")
+solutions_resume += "\n{}".format(line_separator)
+
+resume = """{line_separator}
 Find {result} with these numbers : {numbers} and operations {operations}
-{count} possibilies to sort operations and numbers.
-Found {solutions} solutions below.
-{tail}""".format(
+{count} possibilies to sort operations, numbers and priorities.
+Found {solutions} solutions.
+{line_separator}""".format(
     result = int(result), numbers = [int(n) for n in numbers], operations = operationsSigns.values(),
     count = count,
     solutions = sum([len(i) for i in solutions.values()]),
-    tail = 15*4*"=")
+    line_separator = line_separator)
+
 print(resume)
+print(solutions_resume)
 for (k,v) in solutions.items() :
     print("Found {} solution{} with {} point{}:{}".format(len(v),
                                                  "s" if len(v)>1 else "",
@@ -127,5 +141,6 @@ for (k,v) in solutions.items() :
         print("{}{}".format(4*" ", s))
     print(15*"-=-.")
 print(resume)
+print(solutions_resume)
 print("End of searching")
 raw_input("Press RETURN key to close window.")
