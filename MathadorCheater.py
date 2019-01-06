@@ -1,6 +1,7 @@
 from itertools import permutations, product, combinations#, combinations_with_replacement
 from operator import add, truediv, sub, mul # truediv = float div
 from copy import deepcopy
+from fractions import Fraction
 
 #Enonce
 level_unknown=[
@@ -91,6 +92,8 @@ for numbers in loop_numbers:
                     op = operationsSigns[operations_copy[next_operation].__name__]
                     # Pop 'index=next_operation' + 'index=next_operation+1'
                     r  = operations_copy.pop(next_operation)(current_result.pop(next_operation),current_result.pop(next_operation))
+                    if op == operationsSigns['truediv']:
+                        r = Fraction(r)
                     if len(solutionString) > 0:
                         solutionString += " ; "
                     solutionString += "{n1}{op}{n2} = {result}".format(
